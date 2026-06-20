@@ -65,6 +65,39 @@ impl ReviewRecord {
             review_count: 0,
         }
     }
+
+    // &mut self, we wanna change this so we are taking a mutable borrow
+    // quality is 1-5 value
+    pub fn update(&mut self, quality: u8){
+        // failing score: 3
+        // aakwsp did not recall card 
+        if quality < 3 {
+            self.state = ReviewState::Relearning;
+            self.interval_days = 0;
+            self.review_count = 0;
+            return; // early ret are allowed
+        }
+
+        // passing score:
+        // aakwsp is doing well
+        self.interval_days = match self.review_count{
+            0 => 1,
+            1 => 6,
+            _ => (self.interval_days as f64 * self.ease_factor).round() as u32
+        };
+
+        // adjust ease factor using the SM-2 formula cuz claude said it was good
+        let q = quality as f64; // "as f64" is a cast, pre cool acc
+        self.ease_factor += 0.1 - (5.0 - q) * (0.08 + (5.0 - q) * 0.02);
+
+        // dont let ease factor go below the SM-2 floor, 1.3
+        if self.ease_factor < 1.3{
+            self.ease_factor = 1.3;
+        }
+
+        self.review_count += 1;
+        self.state = ReviewState::Reviewing;
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -110,5 +143,39 @@ mod tests {
         assert_eq!(record.interval_days, 0);
         assert_eq!(record.ease_factor, 2.5);
         assert_eq!(record.review_count, 0);
+    }
+
+    #[test]
+    fn passing_grows_the_interval() {
+        let mut record = ReviewRecord::new(1);
+
+        // first one interval should be 1 day
+        record.update(5);
+        assert_eq!(record.interval_days, 1);
+        assert_eq!(record.review_count, 1);
+        assert_eq!(record.state, ReviewState::Reviewing);
+
+        // interval should be 6 days
+        record.update(5);
+        assert_eq!(record.interval_days, 6);
+        assert_eq!(record.review_count, 2);
+
+        record.update(5);
+        assert!(record.interval_days > 6);
+    }
+
+    #[test]
+    fn failing_resets_the_card() {
+        let mut record = ReviewRecord::new(1);
+        
+        // progress up
+        record.update(5);
+        record.update(5);
+
+        // lefail should make all go to default
+        record.update(1);
+        assert_eq!(record.interval_days, 0);
+        assert_eq!(record.review_count, 0);
+        assert_eq!(record.state, ReviewState::Relearning);
     }
 }
