@@ -4,13 +4,22 @@
 
 // derive just means run these types of functions on it, run Debug function and
 // Clone function
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Card {
     pub id: u64,
     pub question: String,
     pub correct_answer: String,
     pub distractors: Vec<String>,
     pub explaination: String,
+    pub tags: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Deck{
+    pub name: String,
+    pub cards: Vec<Card>,
+    pub records: Vec<ReviewRecord>,   
+    next_id: u64, 
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -42,6 +51,7 @@ impl Card {
         correct_answer: String,
         distractors: Vec<String>,
         explaination: String,
+        tags: Vec<String>,
     ) -> Card {
         // -> Card is the return type which is card
         Card {
@@ -51,7 +61,39 @@ impl Card {
             correct_answer,
             distractors,
             explaination,
+            tags,
         }
+    }
+}
+
+impl Deck {
+    pub fn new(name: String) -> Deck {
+        Deck {
+            name,
+            cards: Vec::new(),
+            records: Vec::new(),
+            next_id: 1,
+        }
+        
+    }
+
+    pub fn add_card(
+        &mut self,
+        question: String,
+        correct_answer: String,
+        distractors: Vec<String>,
+        explanation: String,
+        tags: Vec<String>,
+    ) {
+        let id = self.next_id;
+
+        let card: Card = Card::new(id, question, correct_answer, distractors, explanation, tags);
+        let record = ReviewRecord::new(id);
+
+        self.cards.push(card);
+        self.records.push(record);
+
+        self.next_id += 1;
     }
 }
 
@@ -126,6 +168,7 @@ mod tests {
                 String::from("meow"),
             ],
             String::from("three maws !"),
+            vec![]
         );
 
         // i know u a dumbass this is just compareing the vals @fatkwsp
@@ -177,5 +220,23 @@ mod tests {
         assert_eq!(record.interval_days, 0);
         assert_eq!(record.review_count, 0);
         assert_eq!(record.state, ReviewState::Relearning);
+    }
+
+    #[test]
+    fn adding_cards_assigns_ids_and_records() {
+        let mut deck = Deck::new(String::from("maw 100"));
+
+        deck.add_card(
+            String::from("wa is maw"),
+            String::from("maw"),
+            vec![String::from("wat"), String::from("sick")],
+            String::from("maw is maw"),
+            vec![],
+        );
+
+        assert_eq!(deck.cards.len(), 1);
+        assert_eq!(deck.records.len(), 1);
+        assert_eq!(deck.cards[0].id, 1);
+        assert_eq!(deck.records[0].card_id, 1);
     }
 }
