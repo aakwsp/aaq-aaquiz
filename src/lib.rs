@@ -1,4 +1,10 @@
 // -----------------------------------------------------------------------------
+// ----------------------------------------------------------------- DEFINITIONS
+// -----------------------------------------------------------------------------
+use chrono::NaiveDate;
+
+
+// -----------------------------------------------------------------------------
 // ------------------------------------------------------------------------ TYPE
 // -----------------------------------------------------------------------------
 
@@ -37,6 +43,7 @@ pub struct ReviewRecord {
     pub interval_days: u32, // how many days till we bring the card again
     pub ease_factor: f64,   // how easy it is (via algo later)
     pub review_count: u32,  // how many times we have reviewed card
+    pub date_due:NaiveDate, // this is the date shi we added
 }
 // -----------------------------------------------------------------------------
 // ------------------------------------------------------------------------ IMPL
@@ -105,6 +112,7 @@ impl ReviewRecord {
             interval_days: 0,
             ease_factor: 2.5,
             review_count: 0,
+            date_due: chrono::Local::now().date_naive(),
         }
     }
 
