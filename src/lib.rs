@@ -1,22 +1,40 @@
 // -----------------------------------------------------------------------------
-// ----------------------------------------------------------------- DEFINITIONS
+// --------------------------------------------------------------------- IMPORTS
 // -----------------------------------------------------------------------------
 use chrono::NaiveDate;
 
 // -----------------------------------------------------------------------------
-// ------------------------------------------------------------------------ TYPE
+// ----------------------------------------------------- TYPES & IMPLEMENTATIONS
 // -----------------------------------------------------------------------------
 
-// derive just means run these types of functions on it, run Debug function and
-// Clone function
 #[derive(Debug, Clone, PartialEq)]
 pub struct Card {
     pub id: u64,
     pub question: String,
     pub correct_answer: String,
     pub distractors: Vec<String>,
-    pub explaination: String,
+    pub explanation: String,
     pub tags: Vec<String>,
+}
+
+impl Card {
+    pub fn new(
+        id: u64,
+        question: String,
+        correct_answer: String,
+        distractors: Vec<String>,
+        explanation: String,
+        tags: Vec<String>,
+    ) -> Card {
+        Card {
+            id,
+            question,
+            correct_answer,
+            distractors,
+            explanation,
+            tags,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -25,51 +43,6 @@ pub struct Deck {
     pub cards: Vec<Card>,
     pub records: Vec<ReviewRecord>,
     next_id: u64,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum ReviewState {
-    New,
-    Learning,
-    Reviewing,
-    Relearning,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct ReviewRecord {
-    pub card_id: u64,
-    pub state: ReviewState,
-    pub interval_days: u32,  // how many days till we bring the card again
-    pub ease_factor: f64,    // how easy it is (via algo later)
-    pub review_count: u32,   // how many times we have reviewed card
-    pub date_due: NaiveDate, // this is the date shi we added
-}
-// -----------------------------------------------------------------------------
-// ------------------------------------------------------------------------ IMPL
-// -----------------------------------------------------------------------------
-
-// impl is what functions are in the type
-impl Card {
-    pub fn new(
-        // this is us saying the constructor
-        id: u64,
-        question: String,
-        correct_answer: String,
-        distractors: Vec<String>,
-        explaination: String,
-        tags: Vec<String>,
-    ) -> Card {
-        // -> Card is the return type which is card
-        Card {
-            // this just says what goes where in the card
-            id,
-            question,
-            correct_answer,
-            distractors,
-            explaination,
-            tags,
-        }
-    }
 }
 
 impl Deck {
@@ -101,8 +74,6 @@ impl Deck {
         self.next_id += 1;
     }
 
-    // we just wanna read self, thats why not mut
-    // -> is the function return type.
     pub fn cards_due(&self) -> Vec<&Card> {
         // todays date, this is how u use chrono
         let today = chrono::Local::now().date_naive();
@@ -127,9 +98,27 @@ impl Deck {
                 due.push(card);
             }
         }
-        // bro why is the last term written with no semicolon the return xd
+        // rust returns like this, no semicolon no return statement (unless fast return)
         due
     }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum ReviewState {
+    New,
+    Learning,
+    Reviewing,
+    Relearning,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ReviewRecord {
+    pub card_id: u64,
+    pub state: ReviewState,
+    pub interval_days: u32,  // how many days till we bring the card again
+    pub ease_factor: f64,    // how easy it is (via algo later)
+    pub review_count: u32,   // how many times we have reviewed card
+    pub date_due: NaiveDate, // this is the date we added
 }
 
 impl ReviewRecord {
@@ -145,7 +134,7 @@ impl ReviewRecord {
     }
 
     // &mut self, we wanna change this so we are taking a mutable borrow
-    // quality is 1-5 value
+    // quality is 0-5 value
     pub fn update(&mut self, quality: u8) {
         if quality < 3 {
             // failing
@@ -180,16 +169,38 @@ impl ReviewRecord {
 }
 
 // -----------------------------------------------------------------------------
-// ------------------------------------------------------------------------ TEST
+// ------------------------------------------------------------------- FUNCTIONS
 // -----------------------------------------------------------------------------
 
-// cfg is an atribute like the one above called derive. it just means that
+pub fn calculate_quality(correct: bool, response_ms: u32, distractor_rank: Option<u8>) -> u8 {
+    if correct {
+        if response_ms < 3000 {
+            5
+        } else if response_ms < 8000 {
+            4
+        } else {
+            3
+        }
+    } else {
+        // Wrong answer. If a distractor rank was provided, give partial credit
+        // for a near-miss; otherwise fall back to a flat fail score.
+        match distractor_rank {
+            Some(rank) => 2u8.saturating_sub(rank),
+            None => 1,
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+// ----------------------------------------------------------------------- TESTS
+// -----------------------------------------------------------------------------
+
+// cfg (config) is an atribute like the one above called derive. it just means that
 // "only compile this while running tests", so when shipping the app this code
-// aint finna compile. also cfg means config
 #[cfg(test)]
 mod tests {
-    // declares module test, its a namespace shi and its for organiz
-    use super::*; // bring parantal shi into scope. and star just means all
+    // declares module test, its a namespace and its for organiz
+    use super::*; // bring parantal into scope. and star just means all
     // use is something/somewhat like #include
 
     #[test] // tell cargo that this is a test, cargo run all tests
@@ -200,15 +211,15 @@ mod tests {
             String::from("what is worm backwards ?"),
             String::from("mrow"),
             vec![
-                String::from("maw"),
-                String::from("mro"),
-                String::from("meow"),
+                String::from("worm"),
+                String::from("road"),
+                String::from("morw"),
             ],
-            String::from("three maws !"),
+            String::from("three mrows!"),
             vec![],
         );
 
-        // i know u a dumbass this is just compareing the vals @fatkwsp
+        // compares two values and throws an error
         assert_eq!(card.id, 1);
         assert_eq!(card.correct_answer, "mrow");
         assert_eq!(card.distractors.len(), 3); // see how many there are
@@ -252,7 +263,7 @@ mod tests {
         record.update(5);
         record.update(5);
 
-        // lefail should make all go to default
+        // fail should make all go to default
         record.update(1);
         assert_eq!(record.interval_days, 0);
         assert_eq!(record.review_count, 0);
@@ -300,6 +311,7 @@ mod tests {
         // make card 2 due 10 days into the future.
         deck.records[1].date_due = chrono::Local::now().date_naive() + chrono::Duration::days(10);
 
+        // card 1 should be the only one due currently
         assert_eq!(deck.cards_due().len(), 1);
     }
 }
