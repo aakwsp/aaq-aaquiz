@@ -314,4 +314,19 @@ mod tests {
         // card 1 should be the only one due currently
         assert_eq!(deck.cards_due().len(), 1);
     }
+
+    #[test]
+    fn quality_from_correct_and_speed() {
+        assert_eq!(calculate_quality(true, 1000, None), 5);
+        assert_eq!(calculate_quality(true, 5000, None), 4);
+        assert_eq!(calculate_quality(true, 8000, None), 3);
+    }
+
+    #[test]
+    fn quality_from_wrong_answers() {
+        assert_eq!(calculate_quality(false, 10000, Some(0)), 2);
+        assert_eq!(calculate_quality(false, 10000, Some(2)), 0);
+        assert_eq!(calculate_quality(false, 10000, Some(5)), 0);
+        assert_eq!(calculate_quality(false, 10000, None), 1);
+    }
 }
