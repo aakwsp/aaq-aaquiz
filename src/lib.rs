@@ -86,12 +86,6 @@ impl Deck {
 
         // just gets the record of all cards
         for record in &self.records {
-            // - Some(Card) is if the find returns Some (a value exists), unwrap whatever is inside
-            //  and name it card. thats what Some(card) is
-            // - |c| are parameters for the inline function. it would be like what the are inside the
-            //  () in func().
-            // - how did we get that? find looks thru all of the cards and gives us a c which is
-            //  valid to the return thing. "does card 1 = record.card_id" and goes thru all cards
             if record.date_due <= today
                 && let Some(card) = self.cards.iter().find(|c| c.id == record.card_id)
             {
