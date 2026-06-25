@@ -209,4 +209,30 @@ mod tests {
         assert!(!deck.remove_card(999)); // returns false
         assert_eq!(deck.cards.len(), 1); // nothing changed
     }
+
+    #[test]
+    fn edit_card_changes_content() {
+        let mut deck = Deck::new(String::from("edit test"));
+
+        deck.add_card(
+            String::from("what is capital of france"),
+            String::from("paris"),
+            vec![String::from("nice"), String::from("lyon")],
+            String::from("the capital is paris"),
+            vec![],
+        );
+
+        deck.edit_card(
+            1,
+            String::from("what is the capital of japan"),
+            String::from("tokyo"),
+            vec![String::from("osaka"), String::from("kyoto")],
+            String::from("the capital is tokyo"),
+            vec![],
+        );
+
+        assert_eq!(deck.cards[0].question, "what is the capital of japan");
+        assert_eq!(deck.cards[0].correct_answer, "tokyo");
+        assert_eq!(deck.cards[0].id, 1);
+    }
 }

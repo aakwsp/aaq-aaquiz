@@ -72,6 +72,27 @@ impl Deck {
         self.cards.len() < old_len
     }
 
+    pub fn edit_card(
+        &mut self,
+        card_id: u64,
+        question: String,
+        correct_answer: String,
+        distractors: Vec<String>,
+        explanation: String,
+        tags: Vec<String>,
+    ) -> bool {
+        if let Some(card) = self.cards.iter_mut().find(|c| c.id == card_id) {
+            card.question = question;
+            card.correct_answer = correct_answer;
+            card.distractors = distractors;
+            card.explanation = explanation;
+            card.tags = tags;
+            true
+        } else {
+            false
+        }
+    }
+
     pub fn cards_due(&self) -> Vec<&Card> {
         // todays date, this is how u use chrono
         let today = chrono::Local::now().date_naive();
