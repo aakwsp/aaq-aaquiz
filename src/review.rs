@@ -2,12 +2,13 @@
 // --------------------------------------------------------------------- IMPORTS
 // -----------------------------------------------------------------------------
 use chrono::NaiveDate;
+use serde::{Deserialize, Serialize};
 
 // -----------------------------------------------------------------------------
 // ----------------------------------------------------- TYPES & IMPLEMENTATIONS
 // -----------------------------------------------------------------------------
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub enum ReviewState {
     New,
     Learning,
@@ -15,7 +16,7 @@ pub enum ReviewState {
     Relearning,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct ReviewRecord {
     pub card_id: u64,
     pub state: ReviewState,

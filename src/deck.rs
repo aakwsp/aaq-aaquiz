@@ -4,11 +4,13 @@
 use crate::card::Card;
 use crate::review::ReviewRecord;
 
+use serde::{Deserialize, Serialize};
+
 // -----------------------------------------------------------------------------
 // ----------------------------------------------------- TYPES & IMPLEMENTATIONS
 // -----------------------------------------------------------------------------
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct Deck {
     pub name: String,
     pub cards: Vec<Card>,
@@ -25,6 +27,20 @@ impl Deck {
             next_id: 1,
         }
     }
+
+    // NOTE: the dashboard stats need review history, add a reviewEvent log
+    // for dates, correct quality, response time, etc to append on every review.
+    // derive stats from it later.
+
+    // the box<dyn std::error::Error> just says error of any type
+    pub fn save(&self, path: &str) -> Result<(), Box<dyn std::error::Error>> {
+        let json = serde_json::to_string(self)?;
+        std::fs::write(path, json)?;
+        Ok(())
+    }
+
+    // TODO open
+    //
 
     pub fn add_card(
         &mut self,
