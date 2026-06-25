@@ -23,6 +23,18 @@ mod tests {
     use super::*; // bring parantal into scope. and star just means all
     // use is something/somewhat like #include
 
+    fn sample_deck() -> Deck {
+        let mut deck = Deck::new(String::from("sample"));
+        deck.add_card(
+            String::from("what is 2 + 2"),
+            String::from("4"),
+            vec![String::from("3"), String::from("5")],
+            String::from("basic addition"),
+            vec![],
+        );
+        deck
+    }
+
     #[test] // tell cargo that this is a test, cargo run all tests
     fn creates_a_card() {
         let card = Card::new(
@@ -148,5 +160,25 @@ mod tests {
         assert_eq!(calculate_quality(false, 10000, Some(2)), 0);
         assert_eq!(calculate_quality(false, 10000, Some(5)), 0);
         assert_eq!(calculate_quality(false, 10000, None), 1);
+    }
+
+    // NOTE: paths are &str for now. For cross-platform shipping (Windows/macOS),
+    // switch to std::path::Path and use the `directories` crate for the correct
+    // per-OS app-data location. Hardcoded path strings won't be portable.
+
+    #[test]
+    fn save_and_load_deck() {
+        let deck = sample_deck();
+
+        // save to temp file
+        let path = "test_deck.json";
+        deck.save(path).unwrap();
+        let loaded = Deck::load(path).unwrap();
+
+        // compare
+        assert_eq!(deck, loaded);
+
+        // clean file
+        std::fs::remove_file(path).unwrap();
     }
 }

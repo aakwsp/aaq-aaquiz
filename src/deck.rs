@@ -32,15 +32,21 @@ impl Deck {
     // for dates, correct quality, response time, etc to append on every review.
     // derive stats from it later.
 
-    // the box<dyn std::error::Error> just says error of any type
+    /// saves the deck to the path given. prints path as json.
+    ///
+    /// # Errors
+    /// returns an error if serialization fails or the file cant be opened.
     pub fn save(&self, path: &str) -> Result<(), Box<dyn std::error::Error>> {
         let json = serde_json::to_string(self)?;
         std::fs::write(path, json)?;
         Ok(())
     }
 
-    // TODO open
-    //
+    pub fn load(path: &str) -> Result<Deck, Box<dyn std::error::Error>> {
+        let json = std::fs::read_to_string(path)?;
+        let deck = serde_json::from_str(&json)?;
+        Ok(deck)
+    }
 
     pub fn add_card(
         &mut self,
