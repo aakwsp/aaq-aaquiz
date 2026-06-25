@@ -181,4 +181,32 @@ mod tests {
         // clean file
         std::fs::remove_file(path).unwrap();
     }
+
+    #[test]
+    fn review_card_and_update_deck() {
+        let mut deck = sample_deck();
+        assert!(deck.review_card(1, true, 1000, None));
+        assert!(!deck.review_card(999, true, 1000, None));
+        assert_eq!(deck.records[0].review_count, 1);
+    }
+
+    #[test]
+    fn remove_card_from_deck() {
+        let mut deck = sample_deck();
+
+        deck.add_card(
+            String::from("what is capital of france"),
+            String::from("paris"),
+            vec![String::from("nice"), String::from("lyon")],
+            String::from("the capital is paris !"),
+            vec![],
+        );
+        assert!(deck.remove_card(1));
+        assert_eq!(deck.cards.len(), 1);
+        assert_eq!(deck.records.len(), 1);
+        assert_eq!(deck.cards[0].id, 2);
+
+        assert!(!deck.remove_card(999)); // returns false
+        assert_eq!(deck.cards.len(), 1); // nothing changed
+    }
 }

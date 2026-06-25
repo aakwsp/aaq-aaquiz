@@ -1,8 +1,8 @@
 // -----------------------------------------------------------------------------
 // --------------------------------------------------------------------- IMPORTS
 // -----------------------------------------------------------------------------
-use crate::card::Card;
 use crate::review::ReviewRecord;
+use crate::{calculate_quality, card::Card};
 
 use serde::{Deserialize, Serialize};
 
@@ -32,10 +32,6 @@ impl Deck {
     // for dates, correct quality, response time, etc to append on every review.
     // derive stats from it later.
 
-    /// saves the deck to the path given. prints path as json.
-    ///
-    /// # Errors
-    /// returns an error if serialization fails or the file cant be opened.
     pub fn save(&self, path: &str) -> Result<(), Box<dyn std::error::Error>> {
         let json = serde_json::to_string(self)?;
         std::fs::write(path, json)?;
@@ -67,6 +63,15 @@ impl Deck {
         self.next_id += 1;
     }
 
+    pub fn remove_card(&mut self, card_id: u64) -> bool {
+        let old_len = self.cards.len();
+
+        self.cards.retain(|c| c.id != card_id);
+        self.records.retain(|r| r.card_id != card_id);
+
+        self.cards.len() < old_len
+    }
+
     pub fn cards_due(&self) -> Vec<&Card> {
         // todays date, this is how u use chrono
         let today = chrono::Local::now().date_naive();
@@ -87,5 +92,20 @@ impl Deck {
         }
         // rust returns like this, no semicolon no return statement (unless fast return)
         due
+    }
+
+    pub fn review_card(
+        &mut self,
+        card_id: u64,
+        correct: bool,
+        response_ms: u32,
+        distractor_rank: Option<u8>,
+    ) -> bool {
+        if let Some(record) = self.records.iter_mut().find(|r| r.card_id == card_id) {
+            record.update(calculate_quality(correct, response_ms, distractor_rank));
+            true
+        } else {
+            false
+        }
     }
 }
